@@ -43,6 +43,8 @@ class PitchDependentWaitModel:
     def next_note(self, notes):
         notes = normalize_song(notes)
         fnotes = self.notebased_featurer.feature_notes(notes)
+        for fnote in fnotes:
+            fnote.calculate_features()
         sequence = self.notebased_featurer.extract_sequence_for_prediction(fnotes)
         pitch = self.pitch_model.predict(sequence)
         wait = self.wait_model.predict([sequence, pitch])
