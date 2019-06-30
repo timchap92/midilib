@@ -191,3 +191,6 @@ class NoteBasedFeaturer:
         assert dct['type'] == __class__.__name__
 
         return cls(FeaturingConfig.from_dict(dct['featuring_config']))
+
+    def unmap_pitch(self, pitch):
+        return pitch + self.featuring_config.min_pitch

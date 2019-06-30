@@ -1,4 +1,7 @@
 import os
+
+import numpy as np
+from pretty_midi import Note
 from tensorflow.keras.models import load_model
 
 from midilib.featuring.notebased import NoteBasedFeaturer
@@ -41,12 +44,28 @@ class PitchDependentWaitModel:
         return cls(notebased_featurer, pitch_model, pitch_dependent_wait_model)
 
     def next_note(self, notes):
+        """
+
+
+        Parameters
+        ----------
+        notes
+
+        Returns
+        -------
+        prettymidi.Note
+        """
         notes = normalize_song(notes)
         fnotes = self.notebased_featurer.feature_notes(notes)
         for fnote in fnotes:
             fnote.calculate_features()
         sequence = self.notebased_featurer.extract_sequence_for_prediction(fnotes)
-        pitch = self.pitch_model.predict(sequence)
-        wait = self.wait_model.predict([sequence, pitch])
-        return pitch[0], wait[0]
+        pitch = np.argmax(self.pitch_model.predict(sequence)[0])
+        wait = self.wait_model.predict([sequence, [pitch]])[0]
+
+        # Convert back to note
+        pitch = self.notebased_featurer.unmap_pitch(pitch)
+        start = notes[-1].start + wait
+
+        return Note(pitch=pitch, start=start, end=start + 0.5, velocity=128)
 
