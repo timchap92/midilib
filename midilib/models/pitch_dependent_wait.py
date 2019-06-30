@@ -60,11 +60,13 @@ class PitchDependentWaitModel:
         for fnote in fnotes:
             fnote.calculate_features()
         sequence = self.notebased_featurer.extract_sequence_for_prediction(fnotes)
-        pitch = np.argmax(self.pitch_model.predict(sequence)[0])  # TODO: Allow other strategies
-        wait = self.wait_model.predict([sequence, np.array([pitch])])[0]
+        pitch_array = self.pitch_model.predict(sequence)
+        pitch_array = (pitch_array == np.max(pitch_array)).astype('float32')
+        # TODO: Allow other strategies
+        wait = self.wait_model.predict([sequence, pitch_array])[0][0]
 
         # Convert back to note
-        pitch = self.notebased_featurer.unmap_pitch(pitch)
+        pitch = self.notebased_featurer.unmap_pitch(np.argmax(pitch_array))
         start = notes[-1].start + wait
 
         return Note(pitch=pitch, start=start, end=start + 0.5, velocity=128)
